@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game</title>
+    <style>
+        #main {
+            width: 400px;
+            height: 400px;
+            background: white;
+            border: 1px solid black;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        #container {
+            width: 100%;
+            height: 400px;
+            background: white;
+            top: -100px;
+            position: relative;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background: white;
+            float: left;
+
+        }
+
+        .black {
+            width: 100px;
+            height: 100px;
+            background: black;
+        }
+
+    </style>
+</head>
+<body>
+<h1 id="score">0</h1>
+<input id="btn" type="button" value="重新开始" />
+<div id="main">
+    <div id="container"></div>
+</div>
+
+</body>
+<script>
+    var oCon = document.getElementById('container');
+    var oMain = document.getElementById('main');
+    var oBtn=document.getElementById('btn');
+    var oTimer = null;//定时器
+    var state = 0;//0初始化 1进行中 2暂停 3失败
+    var speed = 2;//初始速度2
+
+
+    /*初始化*/
+    function init() {
+        for (var i = 0; i < 4; i++) {
+            crow();
+        }
+
+        oMain.onclick = function (ev) {
+            judge(ev);
+
+        }
+
+    }
+
+    /*判断*/
+    function judge(ev) {
+        if (state == 3) {
+            alert('您已经失败了！');
+            return;
+        }
+
+        if (ev.target.className.indexOf('black') == -1) { //点击的不是黑块
+            clearInterval(oTimer);
+            state=3;
+            alert('结束');
+
+        } else {    //点击的是黑块
+            ev.target.className = 'cell'; //将点击的黑块变成白块
+            ev.target.parentNode.pass = 1; //自定义状态标量 为1表示可以通过底部
+            score();
+        }
+
+    }
+
+
+    /*运动*/
+    function move() {
+        var oTop = parseInt(window.getComputedStyle(oCon, null)['top']); //获取oCon最新的top值
+        var rows = oCon.childNodes;
+
+        if (oTop + speed > 0) { //一步会走过头时
+            oTop = 0;
+        } else {
+            oTop += speed;//调节每次下降的像素
+        }
+        oCon.style.top = oTop + 'px';
+
+        if (oTop == 0) { //如果下降了一行的高度，就再给oCon新创建一行，并使oCon的高度为-100px，
+            crow();
+            oCon.style.top = '-100px';
+            oCon.removeChild(oCon.lastChild);//删除最下面一行
+            if(rows[rows.length-1].pass!==1){
+                fail();
+            }
+
+        } else if (oTop == -98) {
+
+            if ((rows.length == 5) && (rows[rows.length - 1].pass !== 1)) {
+                fail();
+            }
+        }
+    }
+
+
+    /*定时器*/
+    function startMove() {
+        oTimer = setInterval(move, 30);
+    }
+
+    /*游戏失败 结束*/
+    function fail() {
+        clearInterval(oTimer);
+        state = 3;
+        alert('Game Over!');
+    }
+
+
+    /* 创建div.row*/
+    function crow() {
+        var oRow = cdiv('row');
+        var oArr = createSn();
+        for (var i = 0; i < 4; i++) {
+            // var oCell = cdiv(oArr[i]);
+            oRow.appendChild(cdiv(oArr[i]));
+        }
+
+        if (oCon.firstChild == null) {
+
+            oCon.appendChild(oRow);
+        } else {
+            oCon.insertBefore(oRow, oCon.firstChild);
+        }
+
+    }
+
+    /*
+    创建div，ClassName是其类名
+     */
+    function cdiv(className) {
+        var oDiv = document.createElement('div');
+        oDiv.className = className;
+        return oDiv;
+    }
+
+    /*
+        返回一个数组，随机选取一个使其变为‘cell black’，其他均为cell
+     */
+
+    function createSn() {
+        var arr = ['cell', 'cell', 'cell', 'cell'];
+        var i = Math.floor(Math.random() * 4);  //向下取整
+        arr[i] = 'cell black'; //随机将arr中的一个变成‘cell black’
+        return arr;
+    }
+
+
+    /*得分*/
+    function score() {
+        var oScore = document.getElementById('score');
+        var newSocre = parseInt(oScore.innerHTML) + 1;
+        oScore.innerHTML = newSocre;
+        if (newSocre % 10 == 0) { //每得20分 加速一次
+            speed += 1;
+        }
+    }
+
+    oBtn.onclick=function(){
+        window.location.reload();
+    }
+
+
+
+    init();
+    startMove();
+</script>
+</html>
